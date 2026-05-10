@@ -1,0 +1,66 @@
+name: Daily ABSVA Update
+
+on:
+  schedule:
+    # 11:00 UTC = 7:00 ET (EST/EDT — GitHub cron is UTC).
+    # Slight DST drift is acceptable; better to be a bit late than to miss yesterday.
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4'
+          use-public-rspm: true
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/renv
+          key: renv-${{ runner.os }}-${{ hashFiles('renv.lock') }}
+          restore-keys: |
+            renv-${{ runner.os }}-
+
+      - name: Install renv and dependencies
+        run: |
+          Rscript -e 'install.packages("renv", repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'renv::restore(prompt = FALSE)'
+
+      - name: Run daily update
+        id: update
+        run: Rscript scripts/99_daily_update.R
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "## Daily ABSVA Update" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 1 data/raw/.update_log.txt >> $GITHUB_STEP_SUMMARY || echo "(log not produced)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit refreshed parquets
+        if: steps.update.outcome == 'success'
+        run: |
+          git config user.name  "absva-bot"
+          git config user.email "absva-bot@users.noreply.github.com"
+          git add data/processed/
+          if git diff --staged --quiet; then
+            echo "No parquet changes to commit."
+          else
+            git commit -m "Daily update: $(date -u +%F)"
+            git push
+          fi

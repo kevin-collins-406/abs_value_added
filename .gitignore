@@ -1,0 +1,25 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# OS
+.DS_Store
+
+# renv (library is huge; lockfile is tracked)
+renv/library/
+renv/local/
+renv/staging/
+renv/python/
+renv/sandbox/
+
+# Data
+data/raw/
+data/intermediate/
+*.csv
+!data/processed/*.csv
+
+# Logs
+*.log

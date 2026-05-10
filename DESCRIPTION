@@ -1,0 +1,40 @@
+Package: absva
+Type: Project
+Title: ABSVA — ABS Value Added (Catcher Run-Value Metric)
+Version: 0.1.0
+Authors@R: person("Kevin", "Collins", email = "kcollinsindy@gmail.com",
+    role = c("aut", "cre"))
+Description: Open-source pipeline + Shiny dashboard for ABSVA, a catcher
+    performance metric under MLB's Automatic Ball-Strike challenge system.
+    Scrapes Statcast and MLB Stats API data, classifies each pitch into one
+    of five ABSVA event types, applies a 288-cell run-expectancy matrix, and
+    aggregates to a per-catcher leaderboard.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.4.0)
+Imports:
+    arrow,
+    bs4Dash,
+    dplyr,
+    DT,
+    glue,
+    here,
+    htmltools,
+    httr,
+    jsonlite,
+    lubridate,
+    plotly,
+    purrr,
+    readr,
+    shiny,
+    stringr,
+    tibble,
+    tidyr
+Suggests:
+    baseballr,
+    furrr,
+    future,
+    ggiraph,
+    ggplot2,
+    renv
+URL: https://github.com/kcollinsindy/absva
