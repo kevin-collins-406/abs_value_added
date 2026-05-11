@@ -23,6 +23,8 @@ suppressPackageStartupMessages({
 })
 source(here::here("R", "utils.R"))
 
+ensure_data_dirs()
+
 SEASON      <- 2026
 LOG_PATH    <- data_path("raw", ".update_log.txt")
 SC_DIR      <- data_path("raw",          glue("statcast_{SEASON}"), "weekly")

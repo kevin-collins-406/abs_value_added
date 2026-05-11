@@ -19,6 +19,8 @@ suppressPackageStartupMessages({
 source(here::here("R", "utils.R"))
 source(here::here("R", "build_re288.R"))
 
+ensure_data_dirs()
+
 DAY_DIR    <- data_path("raw",          "statcast_re288_daily")
 INPUT_PATH <- data_path("intermediate", "statcast_re288_input.parquet")
 OUT_PATH   <- data_path("processed",    "re288_matrix.parquet")

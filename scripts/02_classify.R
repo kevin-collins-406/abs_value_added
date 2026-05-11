@@ -16,6 +16,8 @@ suppressPackageStartupMessages({
 source(here::here("R", "utils.R"))
 source(here::here("R", "classify_events.R"))
 
+ensure_data_dirs()
+
 INPUT_PATH    <- data_path("intermediate", "absva_master_2026.parquet")
 OUTPUT_PATH   <- data_path("intermediate", "absva_classified_2026.parquet")
 CHADWICK_PATH <- data_path("raw",          "chadwick_player_lookup.rds")

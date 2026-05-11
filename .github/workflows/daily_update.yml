@@ -35,6 +35,22 @@ jobs:
           restore-keys: |
             renv-${{ runner.os }}-
 
+      # Cache the scrape artifacts so each run is incremental. Without this
+      # every run would re-pull the full season from MLB's APIs (~10 min,
+      # impolite). `data/raw` holds the Statcast weekly CSVs, Stats API
+      # per-game .rds files, the Chadwick player lookup, and logs.
+      # `data/intermediate` holds the joined master + classified parquets,
+      # which are derivative but expensive enough to be worth persisting.
+      - name: Cache scrape artifacts (data/raw, data/intermediate)
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            data/intermediate
+          key: absva-data-${{ github.run_id }}
+          restore-keys: |
+            absva-data-
+
       - name: Install renv and dependencies
         run: |
           Rscript -e 'install.packages("renv", repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'

@@ -19,6 +19,8 @@ suppressPackageStartupMessages({
 source(here::here("R", "utils.R"))
 source(here::here("R", "score_absva.R"))
 
+ensure_data_dirs()
+
 RE288_PATH       <- data_path("processed",    "re288_matrix.parquet")
 EVENTS_PATH      <- data_path("intermediate", "absva_classified_2026.parquet")
 SCORED_PATH      <- data_path("processed",    "absva_scored_2026.parquet")

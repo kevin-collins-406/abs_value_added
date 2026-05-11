@@ -16,6 +16,8 @@ source(here::here("R", "utils.R"))
 source(here::here("R", "scrape_statcast.R"))
 source(here::here("R", "scrape_stats_api.R"))
 
+ensure_data_dirs()
+
 # ── Configuration ───────────────────────────────────────────────────────────
 SEASON       <- 2026
 SEASON_START <- as.Date("2026-03-27")
