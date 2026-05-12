@@ -113,7 +113,7 @@ ui <- bs4DashPage(
               selectInput("sort_by", NULL,
                           choices = c("Sort: ABSVA"      = "absva",
                                       "Sort: ABSVA / 100" = "per100",
-                                      "Sort: Framing only" = "framing"),
+                                      "Sort: Frame only"   = "frame"),
                           width = "180px", selected = "absva"),
               span("Min pitches", style = sprintf("font-size: 11px; color: %s;", THEME$text_dim)),
               numericInput("min_pitches", NULL, value = 50, min = 0, step = 25,

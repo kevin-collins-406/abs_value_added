@@ -3,16 +3,16 @@
 # values, then aggregate to per-catcher leaderboards.
 #
 # Run-value formulas (catcher perspective):
-#   framing_steal   RV = RE(after_ball) - RE(after_strike)   (positive)
+#   frame   RV = RE(after_ball) - RE(after_strike)   (positive)
 #   challenge_win   RV = RE(after_ball) - RE(after_strike)   (positive)
 #   overturned_frame   RV = 0                                   (per spec)
-#   miss_penalty    RV = RE(after_strike) - RE(after_ball)   (negative)
-#   bad_challenge   RV = -0.057                              (fixed penalty)
+#   missed_ABS_opportunity    RV = RE(after_strike) - RE(after_ball)   (negative)
+#   challenge_lost   RV = -0.057                              (fixed penalty)
 #
 # (RE288 is offense-perspective; catcher RV is the offense impact, negated.)
 # =============================================================================
 
-BAD_CHALLENGE_PENALTY <- -0.057   # = mean(challenge_win RV) × overturn_rate
+CHALLENGE_LOST_PENALTY <- -0.057   # = mean(challenge_win RV) × overturn_rate
 
 # Columns the Shiny app needs from the scored parquet. Anything outside this
 # whitelist is dropped by slim_for_app() — keeps the parquet small and app
@@ -92,8 +92,8 @@ compute_event_run_values <- function(events, re288) {
   re_lookup <- make_re_lookup(re288)
 
   ev <- events |>
-    dplyr::filter(event_type %in% c("framing_steal", "challenge_win",
-                                    "overturned_frame", "miss_penalty", "bad_challenge")) |>
+    dplyr::filter(event_type %in% c("frame", "challenge_win",
+                                    "overturned_frame", "missed_ABS_opportunity", "challenge_lost")) |>
     dplyr::mutate(
       pre_count  = paste0(balls, "-", strikes),
       base_state = base_state_string(on_1b, on_2b, on_3b),
@@ -118,11 +118,11 @@ compute_event_run_values <- function(events, re288) {
           walk_runs_scored(base_state)
       ),
       event_run_value = dplyr::case_when(
-        event_type == "framing_steal" ~ re_after_ball  - re_after_strike,
+        event_type == "frame" ~ re_after_ball  - re_after_strike,
         event_type == "challenge_win" ~ re_after_ball  - re_after_strike,
         event_type == "overturned_frame" ~ 0,
-        event_type == "miss_penalty"  ~ re_after_strike - re_after_ball,
-        event_type == "bad_challenge" ~ BAD_CHALLENGE_PENALTY,
+        event_type == "missed_ABS_opportunity"  ~ re_after_strike - re_after_ball,
+        event_type == "challenge_lost" ~ CHALLENGE_LOST_PENALTY,
         TRUE ~ NA_real_
       )
     )
@@ -137,15 +137,15 @@ aggregate_to_leaderboard <- function(scored, all_events) {
   scored |>
     dplyr::group_by(fielder_2, catcher_name) |>
     dplyr::summarise(
-      n_framing_steal  = sum(event_type == "framing_steal"),
+      n_frame  = sum(event_type == "frame"),
       n_challenge_win  = sum(event_type == "challenge_win"),
       n_overturned_frame  = sum(event_type == "overturned_frame"),
-      n_miss_penalty   = sum(event_type == "miss_penalty"),
-      n_bad_challenge  = sum(event_type == "bad_challenge"),
-      rv_framing       = sum(event_run_value[event_type == "framing_steal"], na.rm = TRUE),
+      n_missed_ABS_opportunity   = sum(event_type == "missed_ABS_opportunity"),
+      n_challenge_lost  = sum(event_type == "challenge_lost"),
+      rv_frame       = sum(event_run_value[event_type == "frame"], na.rm = TRUE),
       rv_challenge_win = sum(event_run_value[event_type == "challenge_win"], na.rm = TRUE),
-      rv_miss_penalty  = sum(event_run_value[event_type == "miss_penalty"],  na.rm = TRUE),
-      rv_bad_challenge = sum(event_run_value[event_type == "bad_challenge"], na.rm = TRUE),
+      rv_missed_ABS_opportunity  = sum(event_run_value[event_type == "missed_ABS_opportunity"],  na.rm = TRUE),
+      rv_challenge_lost = sum(event_run_value[event_type == "challenge_lost"], na.rm = TRUE),
       absva            = sum(event_run_value, na.rm = TRUE),
       .groups = "drop"
     ) |>

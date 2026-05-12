@@ -3,12 +3,12 @@
 # plus player-name attachment from the Chadwick register.
 #
 # Taxonomy (catcher-only):
-#   framing_steal   (+)  True ball, called strike, batter does NOT challenge
+#   frame   (+)  True ball, called strike, batter does NOT challenge
 #   challenge_win   (+)  Called ball -> catcher challenges -> overturned to strike
 #   overturned_frame   (+)  True ball called strike -> batter challenges and WINS
-#   miss_penalty    (-)  True strike called ball, catcher does NOT challenge
+#   missed_ABS_opportunity    (-)  True strike called ball, catcher does NOT challenge
 #                        (only counts when catcher had challenges available)
-#   bad_challenge   (-)  Catcher challenges a true ball -> loses the challenge
+#   challenge_lost   (-)  Catcher challenges a true ball -> loses the challenge
 #
 # Trust hierarchy:
 #   - For challenged pitches, trust Hawk-Eye's verdict (is_overturned).
@@ -131,15 +131,15 @@ classify_event_type <- function(df) {
 
         # Catcher (defense) challenged
         has_review & challenger_side == "defense" &  is_overturned ~ "challenge_win",
-        has_review & challenger_side == "defense" & !is_overturned ~ "bad_challenge",
+        has_review & challenger_side == "defense" & !is_overturned ~ "challenge_lost",
 
         # Batter (offense) challenged
         has_review & challenger_side == "offense" &  is_overturned ~ "overturned_frame",
         has_review & challenger_side == "offense" & !is_overturned ~ "no_event",
 
         # Unchallenged called pitches
-        !has_review & original_call == "strike" & !abs_true_strike ~ "framing_steal",
-        !has_review & original_call == "ball"   &  abs_true_strike & def_chall_remaining_pre > 0  ~ "miss_penalty",
+        !has_review & original_call == "strike" & !abs_true_strike ~ "frame",
+        !has_review & original_call == "ball"   &  abs_true_strike & def_chall_remaining_pre > 0  ~ "missed_ABS_opportunity",
         !has_review & original_call == "ball"   &  abs_true_strike & def_chall_remaining_pre == 0 ~ "no_event",
 
         TRUE ~ "no_event"

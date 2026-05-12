@@ -19,11 +19,11 @@ Each called pitch is one of five **events** from the catcher's perspective:
 
 | Event | Sign | Meaning |
 |---|:---:|---|
-| `framing_steal`    | + | True ball, called strike, no challenge |
+| `frame`    | + | True ball, called strike, no challenge |
 | `challenge_win`    | + | Catcher challenges a ball; Hawk-Eye overturns to strike |
 | `overturned_frame`    | 0 | True ball called strike; batter challenges and Hawk-Eye reverses the catcher's frame (valued at 0) |
-| `miss_penalty`     | – | True strike called ball, no challenge, defense had ≥1 challenge available |
-| `bad_challenge`    | – | Catcher challenges, loses (fixed −0.057 penalty) |
+| `missed_ABS_opportunity`     | – | True strike called ball, no challenge, defense had ≥1 challenge available |
+| `challenge_lost`    | – | Catcher challenges, loses (fixed −0.057 penalty) |
 
 Each event's run value is computed against the RE288 matrix
 (base × out × count). ABSVA is the sum of run values across a catcher's

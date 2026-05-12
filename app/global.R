@@ -37,29 +37,29 @@ THEME <- list(
 
 # Event-type colors (broadcast palette: red = strike secured, blue = strike lost)
 EVENT_COLORS <- c(
-  framing_steal = "#E24B4A",   # mid red
+  frame = "#E24B4A",   # mid red
   challenge_win = "#A32D2D",   # dark red
   overturned_frame = "#888780",   # gray (zero RV)
-  miss_penalty  = "#378ADD",   # mid blue
-  bad_challenge = "#185FA5"    # dark blue
+  missed_ABS_opportunity  = "#378ADD",   # mid blue
+  challenge_lost = "#185FA5"    # dark blue
 )
 
 # Display labels for events
 EVENT_LABELS <- c(
-  framing_steal = "Framing steal",
+  frame = "Frame",
   challenge_win = "Challenge win",
   overturned_frame = "Overturned frame",
-  miss_penalty  = "Miss penalty",
-  bad_challenge = "Bad challenge"
+  missed_ABS_opportunity  = "Missed ABS Opportunity",
+  challenge_lost = "Challenge Lost"
 )
 
 # Sign per event type (for color rules in tables)
 EVENT_SIGN <- c(
-  framing_steal =  1L,
+  frame =  1L,
   challenge_win =  1L,
   overturned_frame =  0L,
-  miss_penalty  = -1L,
-  bad_challenge = -1L
+  missed_ABS_opportunity  = -1L,
+  challenge_lost = -1L
 )
 
 
@@ -81,17 +81,17 @@ MIN_PITCHES_QUALIFY <- 50
 leaderboard <- leaderboard_raw %>%
   filter(pitches_caught >= MIN_PITCHES_QUALIFY) %>%
   mutate(
-    framing_per100        = 100 * rv_framing       / pitches_caught,
+    frame_per100        = 100 * rv_frame       / pitches_caught,
     challenge_win_per100  = 100 * rv_challenge_win / pitches_caught,
-    miss_penalty_per100   = 100 * rv_miss_penalty  / pitches_caught,
-    bad_challenge_per100  = 100 * rv_bad_challenge / pitches_caught,
+    missed_ABS_opportunity_per100   = 100 * rv_missed_ABS_opportunity  / pitches_caught,
+    challenge_lost_per100  = 100 * rv_challenge_lost / pitches_caught,
     # Rate metrics for "skill-only" percentiles
-    challenge_total       = n_challenge_win + n_bad_challenge,
+    challenge_total       = n_challenge_win + n_challenge_lost,
     challenge_win_rate    = ifelse(challenge_total > 0,
                                    n_challenge_win / challenge_total,
                                    NA_real_),
-    bad_challenge_rate    = 100 * n_bad_challenge / pitches_caught,
-    miss_penalty_rate     = 100 * n_miss_penalty  / pitches_caught
+    challenge_lost_rate    = 100 * n_challenge_lost / pitches_caught,
+    missed_ABS_opportunity_rate     = 100 * n_missed_ABS_opportunity  / pitches_caught
   )
 
 # Helper: percentile within a vector (1-99), where higher value = higher pct.
@@ -104,12 +104,12 @@ leaderboard <- leaderboard %>%
   mutate(
     pct_absva          = pct_rank(absva),
     pct_absva_per100   = pct_rank(absva_per_100),
-    pct_framing        = pct_rank(framing_per100),
+    pct_frame        = pct_rank(frame_per100),
     pct_challenge_rate = pct_rank(coalesce(challenge_win_rate, 0)),
     # For "avoid bad challenges" and "avoid miss penalties":
     # lower rate is better, so invert.
-    pct_avoid_bad      = pct_rank(-bad_challenge_rate),
-    pct_avoid_miss     = pct_rank(-miss_penalty_rate)
+    pct_avoid_bad      = pct_rank(-challenge_lost_rate),
+    pct_avoid_miss     = pct_rank(-missed_ABS_opportunity_rate)
   )
 
 cat(sprintf("[global.R] Qualifying catchers (%d+ pitches): %d\n",
@@ -120,10 +120,10 @@ cat(sprintf("[global.R] Qualifying catchers (%d+ pitches): %d\n",
 # Used in the modal's event-breakdown table.
 
 LEAGUE_AVG_PER100 <- list(
-  framing_steal = mean(100 * leaderboard$rv_framing       / leaderboard$pitches_caught, na.rm = TRUE),
+  frame = mean(100 * leaderboard$rv_frame       / leaderboard$pitches_caught, na.rm = TRUE),
   challenge_win = mean(100 * leaderboard$rv_challenge_win / leaderboard$pitches_caught, na.rm = TRUE),
-  miss_penalty  = mean(100 * leaderboard$rv_miss_penalty  / leaderboard$pitches_caught, na.rm = TRUE),
-  bad_challenge = mean(100 * leaderboard$rv_bad_challenge / leaderboard$pitches_caught, na.rm = TRUE),
+  missed_ABS_opportunity  = mean(100 * leaderboard$rv_missed_ABS_opportunity  / leaderboard$pitches_caught, na.rm = TRUE),
+  challenge_lost = mean(100 * leaderboard$rv_challenge_lost / leaderboard$pitches_caught, na.rm = TRUE),
   total         = mean(leaderboard$absva_per_100, na.rm = TRUE)
 )
 

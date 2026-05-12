@@ -34,7 +34,7 @@ server <- function(input, output, session) {
   output$kpi_challenges <- renderUI({
     kpi_card("Challenges",
              format(sum(events_raw$event_type %in%
-                          c("challenge_win","bad_challenge","overturned_frame")),
+                          c("challenge_win","challenge_lost","overturned_frame")),
                     big.mark = ","))
   })
   output$kpi_overturn_rate <- renderUI({
@@ -60,7 +60,7 @@ server <- function(input, output, session) {
     sort_col <- switch(input$sort_by %||% "absva",
                        "absva"   = "absva",
                        "per100"  = "absva_per_100",
-                       "framing" = "rv_framing")
+                       "frame"   = "rv_frame")
 
     df %>% arrange(desc(.data[[sort_col]]))
   })
@@ -77,11 +77,11 @@ server <- function(input, output, session) {
         Rank      = row_number(),
         Catcher   = catcher_name,
         Pitches   = pitches_caught,
-        FS        = n_framing_steal,
+        FS        = n_frame,
         CW        = n_challenge_win,
         FU        = n_overturned_frame,
-        MP        = n_miss_penalty,
-        BC        = n_bad_challenge,
+        MP        = n_missed_ABS_opportunity,
+        BC        = n_challenge_lost,
         ABSVA     = round(absva, 1),
         Per100    = round(absva_per_100, 2),
         FielderID = fielder_2
@@ -144,9 +144,9 @@ server <- function(input, output, session) {
   modal_filters <- reactiveValues(event = "all", count = "all", game = "all")
 
   observeEvent(input$flt_event_all,        { modal_filters$event <- "all" })
-  observeEvent(input$flt_event_framing,    { modal_filters$event <- "framing_steal" })
+  observeEvent(input$flt_event_frame,    { modal_filters$event <- "frame" })
   observeEvent(input$flt_event_challenges, { modal_filters$event <- "challenges" })
-  observeEvent(input$flt_event_misses,     { modal_filters$event <- "miss_penalty" })
+  observeEvent(input$flt_event_misses,     { modal_filters$event <- "missed_ABS_opportunity" })
 
   observeEvent(input$flt_count_all,    { modal_filters$count <- "all" })
   observeEvent(input$flt_count_2strk,  { modal_filters$count <- "two_strikes" })
@@ -167,13 +167,13 @@ server <- function(input, output, session) {
 
     df <- events_for_catcher(fid)
 
-    if (modal_filters$event == "framing_steal") {
-      df <- df %>% filter(event_type == "framing_steal")
+    if (modal_filters$event == "frame") {
+      df <- df %>% filter(event_type == "frame")
     } else if (modal_filters$event == "challenges") {
       df <- df %>% filter(event_type %in%
-                            c("challenge_win","bad_challenge","overturned_frame"))
-    } else if (modal_filters$event == "miss_penalty") {
-      df <- df %>% filter(event_type == "miss_penalty")
+                            c("challenge_win","challenge_lost","overturned_frame"))
+    } else if (modal_filters$event == "missed_ABS_opportunity") {
+      df <- df %>% filter(event_type == "missed_ABS_opportunity")
     }
 
     if (modal_filters$count == "two_strikes") {
@@ -375,8 +375,8 @@ server <- function(input, output, session) {
                              THEME$text_primary)),
           div(sprintf("%s pitches caught · %d ABSVA events",
                       format(row$pitches_caught, big.mark = ","),
-                      row$n_framing_steal + row$n_challenge_win + row$n_overturned_frame +
-                      row$n_miss_penalty + row$n_bad_challenge),
+                      row$n_frame + row$n_challenge_win + row$n_overturned_frame +
+                      row$n_missed_ABS_opportunity + row$n_challenge_lost),
               style = sprintf("font-size: 12px; color: %s; margin-top: 3px;",
                               THEME$text_muted))
         )
@@ -398,19 +398,19 @@ server <- function(input, output, session) {
                 fmt_signed(row$absva_per_100, 2)),
             div(class = "sub", sprintf("%dth pct", row$pct_absva_per100))),
         div(class = "stat-card",
-            div(class = "label", "framing only"),
+            div(class = "label", "frame only"),
             div(class = "value",
                 style = sprintf("color: %s;",
-                                if (row$rv_framing > 0) "#E24B4A" else "#378ADD"),
-                fmt_signed(row$rv_framing, 1)),
-            div(class = "sub", sprintf("%dth pct", row$pct_framing))),
+                                if (row$rv_frame > 0) "#E24B4A" else "#378ADD"),
+                fmt_signed(row$rv_frame, 1)),
+            div(class = "sub", sprintf("%dth pct", row$pct_frame))),
         div(class = "stat-card",
             div(class = "label", "challenge net"),
             div(class = "value",
                 style = sprintf("color: %s;",
-                                if ((row$rv_challenge_win + row$rv_bad_challenge) > 0)
+                                if ((row$rv_challenge_win + row$rv_challenge_lost) > 0)
                                   "#E24B4A" else "#378ADD"),
-                fmt_signed(row$rv_challenge_win + row$rv_bad_challenge, 1)),
+                fmt_signed(row$rv_challenge_win + row$rv_challenge_lost, 1)),
             div(class = "sub", sprintf("%dth pct", row$pct_challenge_rate)))
       ),
 
@@ -436,7 +436,7 @@ server <- function(input, output, session) {
             div(class = "uppercase-label", style = "margin-bottom: 6px;", "filter pitches"),
             div(style = "display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;",
               actionLink("flt_event_all",        "All",        class = "pill active"),
-              actionLink("flt_event_framing",    "Framing",    class = "pill"),
+              actionLink("flt_event_frame",    "Frame",      class = "pill"),
               actionLink("flt_event_challenges", "Challenges", class = "pill"),
               actionLink("flt_event_misses",     "Misses",     class = "pill")
             ),
@@ -464,19 +464,19 @@ server <- function(input, output, session) {
                 )
               ),
               tags$tbody(
-                breakdown_row("framing_steal", row$n_framing_steal, row$rv_framing,
-                              row$rv_framing       - LEAGUE_AVG_PER100$framing_steal * pct100),
+                breakdown_row("frame", row$n_frame, row$rv_frame,
+                              row$rv_frame       - LEAGUE_AVG_PER100$frame * pct100),
                 breakdown_row("challenge_win", row$n_challenge_win, row$rv_challenge_win,
                               row$rv_challenge_win - LEAGUE_AVG_PER100$challenge_win * pct100),
                 breakdown_row("overturned_frame", row$n_overturned_frame, 0, 0),
-                breakdown_row("miss_penalty",  row$n_miss_penalty,  row$rv_miss_penalty,
-                              row$rv_miss_penalty  - LEAGUE_AVG_PER100$miss_penalty  * pct100),
-                breakdown_row("bad_challenge", row$n_bad_challenge, row$rv_bad_challenge,
-                              row$rv_bad_challenge - LEAGUE_AVG_PER100$bad_challenge * pct100),
+                breakdown_row("missed_ABS_opportunity",  row$n_missed_ABS_opportunity,  row$rv_missed_ABS_opportunity,
+                              row$rv_missed_ABS_opportunity  - LEAGUE_AVG_PER100$missed_ABS_opportunity  * pct100),
+                breakdown_row("challenge_lost", row$n_challenge_lost, row$rv_challenge_lost,
+                              row$rv_challenge_lost - LEAGUE_AVG_PER100$challenge_lost * pct100),
                 tags$tr(style = sprintf("border-top: 1px solid %s;", THEME$text_faint),
                   tags$td("Total", style = "padding: 8px 0; font-weight: 500;"),
-                  tags$td(format(row$n_framing_steal + row$n_challenge_win + row$n_overturned_frame +
-                                 row$n_miss_penalty + row$n_bad_challenge, big.mark = ","),
+                  tags$td(format(row$n_frame + row$n_challenge_win + row$n_overturned_frame +
+                                 row$n_missed_ABS_opportunity + row$n_challenge_lost, big.mark = ","),
                           style = sprintf("text-align: right; color: %s; font-weight: 500; font-variant-numeric: tabular-nums;",
                                           THEME$text_muted)),
                   tags$td(fmt_signed(row$absva, 1),
@@ -495,7 +495,7 @@ server <- function(input, output, session) {
           div(style = sprintf("background: %s; border-radius: 8px; padding: 14px;", THEME$bg_card),
             div(style = "display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; font-size: 11px; align-items: center;",
               pct_bar("ABSVA",      row$pct_absva_per100),
-              pct_bar("Framing",    row$pct_framing),
+              pct_bar("Frame",      row$pct_frame),
               pct_bar("Challenge%", row$pct_challenge_rate),
               pct_bar("Avoid bad",  row$pct_avoid_bad),
               pct_bar("Miss avoid", row$pct_avoid_miss)

@@ -17,11 +17,11 @@ ABSVA is the sum of those run values across a catcher's pitches.
 
 | Event | Sign | Trigger | Run-value formula |
 |---|:---:|---|---|
-| `framing_steal`    | + | True ball, called strike, no challenge                              | `RE(after_ball) − RE(after_strike)` |
+| `frame`    | + | True ball, called strike, no challenge                              | `RE(after_ball) − RE(after_strike)` |
 | `challenge_win`    | + | Catcher challenges a called ball; Hawk-Eye overturns to strike      | `RE(after_ball) − RE(after_strike)` |
 | `overturned_frame`    | 0 | True ball called strike; batter challenges and Hawk-Eye reverses    | `0` (per spec — the catcher's frame got noticed) |
-| `miss_penalty`     | – | True strike called ball, no challenge, defense had ≥1 challenge left | `RE(after_strike) − RE(after_ball)` |
-| `bad_challenge`    | – | Catcher challenges, loses                                           | `−0.057` (fixed; calibrated below) |
+| `missed_ABS_opportunity`     | – | True strike called ball, no challenge, defense had ≥1 challenge left | `RE(after_strike) − RE(after_ball)` |
+| `challenge_lost`    | – | Catcher challenges, loses                                           | `−0.057` (fixed; calibrated below) |
 
 The RE288 matrix gives expected runs scored by the offense from the current
 state to the end of the half-inning. Catcher run value is the **negative** of
@@ -41,7 +41,7 @@ defense), the offense's `RE` drops and the catcher's RV is positive.
 Each team starts a game with **2 challenges**. A successful (overturned)
 challenge is **free**; an unsuccessful one decrements the counter. The
 classifier walks each game pitch-by-pitch, tracking each side's remaining
-challenges before each pitch, so that `miss_penalty` only fires when the
+challenges before each pitch, so that `missed_ABS_opportunity` only fires when the
 defense actually had a challenge available to use.
 
 ## RE288 construction
@@ -65,7 +65,7 @@ The matrix is validated against five published Tango RE288 cells; cells
 within 0.18 runs are considered acceptable (year-over-year run-environment
 drift is on the order of 0.05-0.10).
 
-## `bad_challenge` calibration
+## `challenge_lost` calibration
 
 The fixed −0.057 penalty comes from:
 

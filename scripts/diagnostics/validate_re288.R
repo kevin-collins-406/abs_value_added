@@ -7,7 +7,7 @@
 #   2. Within-count monotonicity (more strikes -> lower RE; more balls -> higher)
 #   3. Within-base-out monotonicity (more baserunners -> higher RE)
 #   4. Low-sample cell review (cells with < 100 pitches need attention?)
-#   5. Distribution of challenge_win run values (feeds bad_challenge calibration)
+#   5. Distribution of challenge_win run values (feeds challenge_lost calibration)
 #
 # Output: data/re288_validation_report.html (heatmap + tables)
 # =============================================================================
@@ -167,7 +167,7 @@ if (nrow(low_n) > 0) {
 }
 
 
-# ── 6. CHALLENGE_WIN RV DISTRIBUTION (for bad_challenge calibration) ─────────
+# ── 6. CHALLENGE_WIN RV DISTRIBUTION (for challenge_lost calibration) ─────────
 
 cat("\n=== Distribution of challenge_win run-value swings ===\n")
 
@@ -244,7 +244,7 @@ cat(glue("SD: {sd(cw_cal$catcher_gain) %>% round(4)}\n"))
 
 # ── 7. BAD_CHALLENGE CALIBRATION (Method 2: EV of a held challenge) ──────────
 
-cat("\n=== bad_challenge calibration ===\n")
+cat("\n=== challenge_lost calibration ===\n")
 
 # Method 2: EV of a held challenge =
 #   P(catcher would correctly identify a future missed strike) *
@@ -264,7 +264,7 @@ cat("\n=== bad_challenge calibration ===\n")
 #   of being used in the remaining pitches, and that probability roughly
 #   equals the fraction of remaining innings.
 #
-# Pragmatic v1: bad_challenge cost = mean(catcher_gain) * P(win) =
+# Pragmatic v1: challenge_lost cost = mean(catcher_gain) * P(win) =
 #   mean(catcher_gain) * 0.532 * 1.0 = ~0.5x mean catcher gain
 # Reasoning: a catcher who burns a challenge on a real ball is giving up
 # the option value of that challenge. If the option is worth the average
@@ -292,7 +292,7 @@ cat(glue("Mean catcher gain per challenge_win:    {round(mean_gain, 4)} runs\n")
 cat(glue("Probability of issuing | held:           {p_used}\n"))
 cat(glue("Probability of winning | issued:         {win_rate}\n"))
 cat(glue("Expected value of one held challenge:    {round(ev_per_held, 4)} runs\n"))
-cat(glue("\n=> bad_challenge penalty: -{round(ev_per_held, 4)} runs per occurrence\n"))
+cat(glue("\n=> challenge_lost penalty: -{round(ev_per_held, 4)} runs per occurrence\n"))
 
 
 # ── 8. Summary ───────────────────────────────────────────────────────────────
@@ -307,4 +307,4 @@ cat(glue("Strike-monotonicity OK:    {nrow(strike_violations) == 0}\n"))
 cat(glue("Ball-monotonicity OK:      {nrow(ball_violations) == 0}\n"))
 cat(glue("Cells with n < 200:        {sum(re288$n_pitches < 200)}\n"))
 cat(glue("Heatmap saved:             data/re288_heatmap.png\n"))
-cat(glue("Recommended bad_challenge: -{round(ev_per_held, 4)} runs\n"))
+cat(glue("Recommended challenge_lost: -{round(ev_per_held, 4)} runs\n"))
